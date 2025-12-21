@@ -44,6 +44,18 @@ let editingTaskId = null;
 let onboardingMode = null;
 let shouldShowOnboarding = false;
 
+// ---------- View Management ----------
+
+function showView(viewName) {
+  const views = ['landingPage', 'authScreen', 'dashboard'];
+  views.forEach(v => {
+    const el = document.getElementById(v);
+    if (el) el.classList.add('hidden');
+  });
+  const target = document.getElementById(viewName);
+  if (target) target.classList.remove('hidden');
+}
+
 // ---------- Authentication & API ----------
 
 function getAuthToken() {
@@ -519,11 +531,13 @@ function initPomodoroTimer() {
 function showAuthScreen() {
   $("#authScreen")?.classList.remove("hidden");
   $("#dashboard")?.classList.add("hidden");
+  $("#landingPage")?.classList.add("hidden");
 }
 
 function hideAuthScreen() {
   $("#authScreen")?.classList.add("hidden");
   $("#dashboard")?.classList.remove("hidden");
+  $("#landingPage")?.classList.add("hidden");
 }
 
 function showError(elementId, message) {
@@ -578,20 +592,9 @@ async function handleLogin(email, password) {
     shouldShowOnboarding = false;
 
     await loadUserData();
-    hideAuthScreen();
+    showView('dashboard');
     // Initialize all dashboard features
-    initWeeklyScheduleInputs();
-    initWeekendScheduleInputs();
-    initDeadlineTimeOptions();
-    initProfileInteractions();
-    initTaskForm();
-    initWizardButtons();
-    initChatbot();
-    initCalendarViewToggle();
-    initGoals();
-    initDailyHabits();
-    initPomodoroTimer();
-    restoreFromState();
+    initDashboard();
     // Start periodic reflection checker
     startReflectionChecker();
     return true;
@@ -644,24 +647,14 @@ async function handleSignup(name, email, password) {
     applyOnboardingModeUI();
 
     await loadUserData();
-    hideAuthScreen();
+    showView('dashboard');
     // Initialize all dashboard features
-    initWeeklyScheduleInputs();
-    initWeekendScheduleInputs();
-    initDeadlineTimeOptions();
-    initProfileInteractions();
-    initTaskForm();
-    initWizardButtons();
-    initChatbot();
-    initCalendarViewToggle();
-    initGoals();
-    initPomodoroTimer();
+    initDashboard();
     // Show personalization-only onboarding for new users (only during signup)
     if (shouldShowOnboarding && !state.profile) {
       setStep(1);
       initOnboardingGoals();
     } else {
-      restoreFromState();
       startReflectionChecker();
     }
     return true;
@@ -698,7 +691,7 @@ function handleLogout() {
       blockingRules: [],
       dailyHabits: [],
     };
-    showAuthScreen();
+    showView('landingPage');
   }
 }
 
@@ -763,6 +756,11 @@ function initAuth() {
       $all(".settings-tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === targetTab));
       $all(".settings-section").forEach((s) => s.classList.toggle("active", s.id === `settings${targetTab.charAt(0).toUpperCase() + targetTab.slice(1)}`));
     });
+  });
+
+  // Auth logo click to return to landing
+  $("#authLogo")?.addEventListener("click", () => {
+    showView('landingPage');
   });
 }
 
@@ -962,41 +960,52 @@ function initSettings() {
 
 // ---------- Initialization ----------
 
-document.addEventListener("DOMContentLoaded", async () => {
-  initAuth();
+function initDashboard() {
+  initWeeklyScheduleInputs();
+  initWeekendScheduleInputs();
+  initDeadlineTimeOptions();
+  initProfileInteractions();
+  initTaskForm();
+  initWizardButtons();
+  initChatbot();
+  initCalendarViewToggle();
+  initGoals();
+  initDailyHabits();
+  initPomodoroTimer();
+  restoreFromState();
+}
 
-  // Check if user is already authenticated
-  const token = getAuthToken();
-  const userStr = localStorage.getItem(STORAGE_USER_KEY);
+function initLandingPage() {
+  // Landing page button handlers
+  $('#landingGetStartedBtn').addEventListener('click', () => {
+    showView('authScreen');
+    // Switch to signup tab
+    $('.auth-tab[data-tab="signup"]').click();
+  });
   
-  if (token && userStr) {
-    try {
-      currentUser = JSON.parse(userStr);
-      authToken = token;
-      const loaded = await loadUserData();
-      if (loaded) {
-        hideAuthScreen();
-        initWeeklyScheduleInputs();
-        initWeekendScheduleInputs();
-        initDeadlineTimeOptions();
-        initProfileInteractions();
-        initTaskForm();
-        initWizardButtons();
-        initChatbot();
-        initCalendarViewToggle();
-        initGoals();
-        initPomodoroTimer();
-        restoreFromState();
-      } else {
-        showAuthScreen();
-      }
-    } catch (err) {
-      console.error("Error initializing:", err);
-      showAuthScreen();
-    }
-  } else {
-    showAuthScreen();
-  }
+  $('#landingLoginBtn').addEventListener('click', () => {
+    showView('authScreen');
+    // Ensure login tab is active
+    $('.auth-tab[data-tab="login"]').click();
+  });
+  
+  $('#heroGetStartedBtn').addEventListener('click', () => {
+    showView('authScreen');
+    $('.auth-tab[data-tab="signup"]').click();
+  });
+  
+  $('#ctaGetStartedBtn').addEventListener('click', () => {
+    showView('authScreen');
+    $('.auth-tab[data-tab="signup"]').click();
+  });
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  // Always show landing page first
+  showView('landingPage');
+
+  initAuth();
+  initLandingPage();
 });
 
 function initWeeklyScheduleInputs() {

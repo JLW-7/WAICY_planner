@@ -11,11 +11,109 @@
 </head>
 <body>
   <div id="app">
+    <!-- Landing Page -->
+    <div id="landingPage" class="landing-page">
+      <header class="landing-header">
+        <div class="logo">
+          <span class="logo-mark target-icon" aria-hidden="true"></span>
+          <span class="logo-text">Axis</span>
+        </div>
+        <nav class="landing-nav">
+          <button id="landingLoginBtn" class="btn btn-ghost">Log In</button>
+          <button id="landingGetStartedBtn" class="btn btn-primary">Get Started</button>
+        </nav>
+      </header>
+      
+      <main class="landing-main">
+        <section class="hero-section" id="hero">
+          <div class="hero-content">
+            <div class="hero-logo">
+              <span class="logo-big target-icon" aria-hidden="true"></span>
+              <h1 class="hero-title">Axis</h1>
+            </div>
+            <h2 class="hero-subtitle">Plan Smarter. Focus Deeper.</h2>
+            <p class="hero-tagline">An AI-powered planning system built for ambitious students who want clarity, not chaos.</p>
+            <button id="heroGetStartedBtn" class="btn btn-primary btn-large" style="margin-right: 3rem;">Get Started</button>
+            <button id="heroLearnMoreBtn" class="btn btn-primary btn-large"><a href="#features" style="text-decoration: none; color: inherit;">Learn More</a></button>
+          </div>
+        </section>
+        
+        <section class="features-section" id="features">
+          <div class="container">
+            <h2>Powerful Features for Student Success</h2>
+            <div class="features-grid">
+              <div class="feature-item">
+                <div class="feature-icon">🎯</div>
+                <h3>Goals Hierarchy</h3>
+                <p>Break down your ambitions into actionable goals across lifetime, yearly, monthly, weekly, and daily levels.</p>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon">🤖</div>
+                <h3>AI Scheduling</h3>
+                <p>Intelligent task scheduling that adapts to your productivity patterns, preferred work styles, and optimal time windows.</p>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon">⏰</div>
+                <h3>Focus Support</h3>
+                <p>Pomodoro timers, distraction blocking, and personalized study techniques to maintain deep focus.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        <section class="how-it-works-section" id="how-it-works">
+          <div class="container">
+            <h2>How It Works</h2>
+            <div class="steps-grid">
+              <div class="step-item">
+                <div class="step-number">1</div>
+                <h3>Set Your Goals</h3>
+                <p>Define your vision and break it down into manageable goals using our intuitive goal canvas.</p>
+              </div>
+              <div class="step-item">
+                <div class="step-number">2</div>
+                <h3>AI Generates Your Schedule</h3>
+                <p>Our AI analyzes your preferences and creates a personalized daily schedule optimized for productivity.</p>
+              </div>
+              <div class="step-item">
+                <div class="step-number">3</div>
+                <h3>Stay Focused & Achieve</h3>
+                <p>Use built-in tools to maintain focus, track progress, and reflect on your journey.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        <section class="cta-section" id="cta">
+          <div class="container">
+            <h2>Start Your Journey to Better Planning</h2>
+            <p>Join thousands of students who have transformed their academic life with Axis.</p>
+            <button id="ctaGetStartedBtn" class="btn btn-primary btn-large">Try Axis Now</button>
+          </div>
+        </section>
+      </main>
+      
+      <footer class="landing-footer">
+        <div class="container">
+          <div class="footer-content">
+            <p>Made with love by July and Emily</p>
+            <nav class="footer-nav">
+              <a href="#hero" class="footer-link">Home</a>
+              <a href="#features" class="footer-link">Features</a>
+              <a href="#how-it-works" class="footer-link">How It Works</a>
+              <a href="#cta" class="footer-link">Get Started</a>
+              <a href="https://github.com/Emily-Random/WAICY_planner" class="btn btn-ghost" target="_blank">View on GitHub</a>
+            </nav>
+          </div>
+        </div>
+      </footer>
+    </div>
+
     <!-- Login/Signup Screen -->
     <div id="authScreen" class="auth-screen">
       <div class="auth-container">
         <div class="auth-header">
-          <div class="logo">
+          <div class="logo" id="authLogo">
             <span class="logo-mark target-icon" aria-hidden="true"></span>
             <span class="logo-text">Axis</span>
           </div>

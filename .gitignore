@@ -1,0 +1,29 @@
+# Environment variables
+.env
+
+# Dependencies
+node_modules/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+server.log
+
+# User data (contains personal information)
+user_data/
+users.json
+
+# IDE
+.vscode/
+.idea/
+
+# Icon files (macOS)
+Icon?

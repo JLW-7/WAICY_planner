@@ -675,6 +675,109 @@ async function handleGoogleAuth() {
   alert("Google OAuth integration requires additional setup. Please use email/password for now.");
 }
 
+// Handle "Continue without login" for testing purposes
+function handleContinueWithoutLogin() {
+  // Create a guest session with local storage only (no server authentication)
+  const guestId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  // Set a fake token to indicate guest mode
+  localStorage.setItem(STORAGE_KEY, `guest_${guestId}`);
+  authToken = `guest_${guestId}`;
+  
+  // Create a guest user object
+  currentUser = {
+    id: guestId,
+    name: "Guest User",
+    email: "guest@test.local",
+    isGuest: true
+  };
+  localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(currentUser));
+  
+  // Initialize empty state for guest
+  state = {
+    profile: null,
+    tasks: [],
+    rankedTasks: [],
+    schedule: [],
+    fixedBlocks: [],
+    goals: [],
+    reflections: [],
+    blockingRules: [],
+    dailyHabits: [],
+    firstReflectionDueDate: null,
+  };
+  
+  // Don't trigger onboarding wizard for guest mode - just go to dashboard
+  onboardingMode = null;
+  shouldShowOnboarding = false;
+  
+  showView('dashboard');
+  initDashboard();
+  
+  // Show a notice that data won't be saved to server
+  showToast("Guest mode: Data is stored locally only and won't persist across browsers.");
+  console.log("Started guest session - data will only be saved to localStorage");
+}
+
+// Override saveUserData for guest mode to use localStorage only
+const originalSaveUserData = saveUserData;
+saveUserData = async function() {
+  const token = getAuthToken();
+  
+  // Check if in guest mode
+  if (token && token.startsWith('guest_')) {
+    // Save to localStorage only
+    localStorage.setItem('planwise_guest_state', JSON.stringify(state));
+    console.log("Guest state saved to localStorage");
+    return;
+  }
+  
+  // Otherwise, use the original server-based save
+  return originalSaveUserData();
+};
+
+// Override loadUserData for guest mode to use localStorage only
+const originalLoadUserData = loadUserData;
+loadUserData = async function() {
+  const token = getAuthToken();
+  
+  // Check if in guest mode
+  if (token && token.startsWith('guest_')) {
+    // Load from localStorage
+    const savedState = localStorage.getItem('planwise_guest_state');
+    if (savedState) {
+      try {
+        const parsed = JSON.parse(savedState);
+        state = {
+          profile: parsed.profile || null,
+          tasks: parsed.tasks || [],
+          rankedTasks: parsed.rankedTasks || [],
+          schedule: parsed.schedule || [],
+          fixedBlocks: parsed.fixedBlocks || [],
+          goals: parsed.goals || [],
+          reflections: parsed.reflections || [],
+          blockingRules: parsed.blockingRules || [],
+          dailyHabits: parsed.dailyHabits || [],
+          firstReflectionDueDate: parsed.firstReflectionDueDate || null,
+        };
+        console.log("Guest state loaded from localStorage");
+        
+        migrateProfileData();
+        migrateGoalsData();
+        ensureTaskIds();
+        return true;
+      } catch (err) {
+        console.error("Error loading guest state:", err);
+        return false;
+      }
+    }
+    return true; // Return true even if no saved state (new guest session)
+  }
+  
+  // Otherwise, use the original server-based load
+  return originalLoadUserData();
+};
+
 function handleLogout() {
   if (confirm("Are you sure you want to logout?")) {
     // Stop reflection checker
@@ -731,6 +834,9 @@ function initAuth() {
   // Google auth buttons
   $("#googleLoginBtn")?.addEventListener("click", handleGoogleAuth);
   $("#googleSignupBtn")?.addEventListener("click", handleGoogleAuth);
+
+  // Continue without login button (for testing)
+  $("#continueWithoutLoginBtn")?.addEventListener("click", handleContinueWithoutLogin);
 
   // Logout button
   $("#logoutBtn")?.addEventListener("click", handleLogout);
@@ -4996,5 +5102,3 @@ function restoreFromState() {
   // Start periodic reflection checker (checks every hour)
   startReflectionChecker();
 }
-
-

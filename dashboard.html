@@ -66,11 +66,57 @@
                 <h2>To‑Do List</h2>
                 <span class="panel-subtitle">Ranked by urgency &amp; deadlines</span>
               </div>
-              <button type="button" id="addTaskBtn" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.75rem;" title="Add new task">
-                + Add Task
-              </button>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <button type="button" id="toggleMatrixBtn" class="btn btn-ghost btn-sm" title="Toggle Eisenhower Matrix view">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="1" y="1" width="5" height="5" rx="1"/>
+                    <rect x="8" y="1" width="5" height="5" rx="1"/>
+                    <rect x="1" y="8" width="5" height="5" rx="1"/>
+                    <rect x="8" y="8" width="5" height="5" rx="1"/>
+                  </svg>
+                </button>
+                <button type="button" id="addTaskBtn" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.75rem;" title="Add new task">
+                  + Add Task
+                </button>
+              </div>
             </div>
           </div>
+          <!-- Eisenhower Matrix View -->
+          <div id="eisenhowerMatrix" class="eisenhower-matrix hidden">
+            <div class="matrix-quadrant quadrant-urgent-important">
+              <div class="quadrant-header">
+                <span class="quadrant-icon">🔥</span>
+                <span class="quadrant-title">Do First</span>
+                <span class="quadrant-label">Urgent & Important</span>
+              </div>
+              <div class="quadrant-tasks" data-priority="Urgent & Important"></div>
+            </div>
+            <div class="matrix-quadrant quadrant-important-not-urgent">
+              <div class="quadrant-header">
+                <span class="quadrant-icon">📅</span>
+                <span class="quadrant-title">Schedule</span>
+                <span class="quadrant-label">Important, Not Urgent</span>
+              </div>
+              <div class="quadrant-tasks" data-priority="Important, Not Urgent"></div>
+            </div>
+            <div class="matrix-quadrant quadrant-urgent-not-important">
+              <div class="quadrant-header">
+                <span class="quadrant-icon">📤</span>
+                <span class="quadrant-title">Delegate</span>
+                <span class="quadrant-label">Urgent, Not Important</span>
+              </div>
+              <div class="quadrant-tasks" data-priority="Urgent, Not Important"></div>
+            </div>
+            <div class="matrix-quadrant quadrant-not-urgent-not-important">
+              <div class="quadrant-header">
+                <span class="quadrant-icon">🗑️</span>
+                <span class="quadrant-title">Eliminate</span>
+                <span class="quadrant-label">Not Urgent & Not Important</span>
+              </div>
+              <div class="quadrant-tasks" data-priority="Not Urgent & Not Important"></div>
+            </div>
+          </div>
+          <!-- List View -->
           <div id="taskList" class="task-list">
             <!-- Tasks populated by JS -->
           </div>
@@ -633,9 +679,8 @@
           </div>
           <form id="addGoalForm" class="modal-form">
             <div class="form-group">
-              <label for="addGoal_level">Goal timeframe</label>
-              <select id="addGoal_level" required>
-                <option value="">Select...</option>
+              <label for="goalLevelSelect">Goal timeframe</label>
+              <select id="goalLevelSelect" required>
                 <option value="lifetime">Lifetime</option>
                 <option value="yearly">Yearly</option>
                 <option value="monthly">Monthly</option>
@@ -644,8 +689,8 @@
               </select>
             </div>
             <div class="form-group">
-              <label for="addGoal_name">Goal description</label>
-              <input type="text" id="addGoal_name" placeholder="Enter your goal..." required />
+              <label for="goalNameInput">Goal description</label>
+              <input type="text" id="goalNameInput" placeholder="Enter your goal..." required />
             </div>
             <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
               <button type="button" id="cancelAddGoalBtn" class="btn btn-ghost">Cancel</button>

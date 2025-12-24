@@ -1413,7 +1413,199 @@ function initDashboard() {
   initGoals();
   initDailyHabits();
   initPomodoroTimer();
+  initEisenhowerMatrix();
+  initHabitNotifications();
   restoreFromState();
+}
+
+// ---------- Eisenhower Matrix ----------
+
+let matrixViewActive = false;
+
+function initEisenhowerMatrix() {
+  const toggleBtn = $("#toggleMatrixBtn");
+  if (!toggleBtn) return;
+  
+  // Remove existing listener by cloning
+  const newBtn = toggleBtn.cloneNode(true);
+  toggleBtn.parentNode?.replaceChild(newBtn, toggleBtn);
+  
+  newBtn.addEventListener("click", () => {
+    matrixViewActive = !matrixViewActive;
+    const taskList = $("#taskList");
+    const matrix = $("#eisenhowerMatrix");
+    
+    if (matrixViewActive) {
+      taskList?.classList.add("hidden");
+      matrix?.classList.remove("hidden");
+      newBtn.classList.add("active");
+      renderEisenhowerMatrix();
+    } else {
+      taskList?.classList.remove("hidden");
+      matrix?.classList.add("hidden");
+      newBtn.classList.remove("active");
+    }
+  });
+}
+
+function renderEisenhowerMatrix() {
+  const matrix = $("#eisenhowerMatrix");
+  if (!matrix) return;
+  
+  const priorities = [
+    "Urgent & Important",
+    "Important, Not Urgent",
+    "Urgent, Not Important",
+    "Not Urgent & Not Important"
+  ];
+  
+  priorities.forEach(priority => {
+    const quadrantTasks = matrix.querySelector(`.quadrant-tasks[data-priority="${priority}"]`);
+    if (!quadrantTasks) return;
+    
+    quadrantTasks.innerHTML = "";
+    
+    const tasksForQuadrant = (state.tasks || []).filter(t => t.task_priority === priority);
+    
+    if (tasksForQuadrant.length === 0) {
+      quadrantTasks.innerHTML = '<div class="quadrant-empty">No tasks</div>';
+      return;
+    }
+    
+    tasksForQuadrant.forEach(task => {
+      const taskItem = document.createElement("div");
+      taskItem.className = `quadrant-task-item${task.completed ? " completed" : ""}`;
+      taskItem.innerHTML = `
+        <div class="quadrant-task-checkbox${task.completed ? " checked" : ""}" data-id="${task.id}"></div>
+        <span class="quadrant-task-name" title="${task.task_name}">${task.task_name}</span>
+      `;
+      quadrantTasks.appendChild(taskItem);
+    });
+  });
+  
+  // Handle clicks for toggling completion and opening timer
+  matrix.onclick = (e) => {
+    const checkbox = e.target.closest(".quadrant-task-checkbox");
+    if (checkbox) {
+      const taskId = checkbox.dataset.id;
+      const task = state.tasks.find(t => t.id === taskId);
+      if (task) {
+        task.completed = !task.completed;
+        saveUserData();
+        renderEisenhowerMatrix();
+        renderTasks();
+        renderTaskSummary();
+        regenerateScheduleAndRender();
+      }
+      return;
+    }
+    
+    const taskItem = e.target.closest(".quadrant-task-item");
+    if (taskItem) {
+      const checkbox = taskItem.querySelector(".quadrant-task-checkbox");
+      if (checkbox) {
+        const taskId = checkbox.dataset.id;
+        openPomodoroTimer(taskId);
+      }
+    }
+  };
+}
+
+// ---------- Habit Notifications (In-page) ----------
+
+let habitNotificationTimeout = null;
+let lastShownHabitId = null;
+
+function initHabitNotifications() {
+  // Check for due habits every minute
+  setInterval(checkHabitsDue, 60000);
+  // Also check on init after a short delay
+  setTimeout(checkHabitsDue, 5000);
+}
+
+function checkHabitsDue() {
+  if (!state.dailyHabits || state.dailyHabits.length === 0) return;
+  
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  
+  // Find a habit that's due now (within 5 minutes window)
+  const dueHabit = state.dailyHabits.find(habit => {
+    const habitMinutes = parseTimeToMinutes(habit.time);
+    if (habitMinutes === null) return false;
+    
+    // Check if we're within a 5 minute window of the habit time
+    const diff = Math.abs(currentMinutes - habitMinutes);
+    return diff <= 5 && habit.id !== lastShownHabitId;
+  });
+  
+  if (dueHabit) {
+    showHabitNotification(dueHabit);
+    lastShownHabitId = dueHabit.id;
+  }
+}
+
+function showHabitNotification(habit) {
+  // Remove any existing notification
+  const existing = document.querySelector(".habit-notification");
+  if (existing) existing.remove();
+  
+  // Create in-page notification
+  const notification = document.createElement("div");
+  notification.className = "habit-notification";
+  notification.innerHTML = `
+    <div class="habit-notification-header">
+      <span class="habit-notification-title">
+        <span class="habit-notification-title-icon">⏰</span>
+        Habit Reminder
+      </span>
+      <button class="habit-notification-close" title="Dismiss">×</button>
+    </div>
+    <div class="habit-notification-content">
+      It's time for: <span class="habit-notification-habit">${habit.name}</span>
+      <br>
+      <small>Scheduled for ${habit.time}</small>
+    </div>
+    <div class="habit-notification-actions">
+      <button class="btn btn-primary" data-action="done">Done ✓</button>
+      <button class="btn btn-ghost" data-action="snooze">Remind in 10 min</button>
+    </div>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  // Handle actions
+  notification.onclick = (e) => {
+    const closeBtn = e.target.closest(".habit-notification-close");
+    if (closeBtn) {
+      notification.remove();
+      return;
+    }
+    
+    const actionBtn = e.target.closest("[data-action]");
+    if (actionBtn) {
+      const action = actionBtn.dataset.action;
+      
+      if (action === "done") {
+        showToast(`${habit.name} completed! 🎉`);
+        notification.remove();
+      } else if (action === "snooze") {
+        showToast("Reminder snoozed for 10 minutes");
+        notification.remove();
+        // Set a timeout to show notification again in 10 minutes
+        setTimeout(() => {
+          lastShownHabitId = null; // Reset so it can be shown again
+          showHabitNotification(habit);
+        }, 10 * 60 * 1000);
+      }
+    }
+  };
+  
+  // Auto-dismiss after 2 minutes
+  if (habitNotificationTimeout) clearTimeout(habitNotificationTimeout);
+  habitNotificationTimeout = setTimeout(() => {
+    notification.remove();
+  }, 120000);
 }
 
 function initLandingPage() {

@@ -4,6 +4,65 @@
 const STORAGE_KEY = "planwise_auth_token";
 const STORAGE_USER_KEY = "planwise_user";
 
+const THEME_KEY = "axis_theme";
+
+function getStoredTheme() {
+  try {
+    const v = localStorage.getItem(THEME_KEY);
+    if (v === "dark" || v === "light") return v;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function getSystemTheme() {
+  return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ? "dark" : "light";
+}
+
+function applyTheme(theme) {
+  const resolved = theme === "dark" ? "dark" : "light";
+  document.documentElement.dataset.theme = resolved;
+
+  const next = resolved === "dark" ? "light" : "dark";
+  document.querySelectorAll("[data-theme-toggle]").forEach((btn) => {
+    btn.setAttribute("aria-pressed", resolved === "dark" ? "true" : "false");
+    btn.setAttribute("aria-label", `Switch to ${next} mode`);
+    btn.title = `Switch to ${next} mode`;
+  });
+}
+
+function setTheme(theme) {
+  const resolved = theme === "dark" ? "dark" : "light";
+  try {
+    localStorage.setItem(THEME_KEY, resolved);
+  } catch {}
+  applyTheme(resolved);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+  setTheme(current === "dark" ? "light" : "dark");
+}
+
+function initTheme() {
+  const stored = getStoredTheme();
+  const initial = stored || document.documentElement.dataset.theme || getSystemTheme();
+  applyTheme(initial);
+
+  document.querySelectorAll("[data-theme-toggle]").forEach((btn) => {
+    btn.addEventListener("click", toggleTheme);
+  });
+
+  const media = window.matchMedia?.("(prefers-color-scheme: dark)");
+  media?.addEventListener?.("change", (e) => {
+    if (getStoredTheme()) return;
+    applyTheme(e.matches ? "dark" : "light");
+  });
+}
+
+initTheme();
+
 const PRIORITY_WEIGHTS = {
   "Urgent & Important": 1,
   "Urgent, Not Important": 2,
@@ -1612,6 +1671,8 @@ function showHabitNotification(habit) {
 }
 
 function initLandingPage() {
+  initLandingReveals();
+
   // Landing page button handlers
   // "Get Started" buttons go to signup tab
   $('#landingGetStartedBtn').addEventListener('click', () => {
@@ -1652,6 +1713,36 @@ function initLandingPage() {
     e.preventDefault();
     $('.auth-tab[data-tab="login"]').click();
   });
+}
+
+function initLandingReveals() {
+  const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  if (prefersReducedMotion) return;
+  if (!("IntersectionObserver" in window)) return;
+
+  const targets = Array.from(
+    document.querySelectorAll(".feature-item, .step-item, .cta-section .container")
+  );
+  if (targets.length === 0) return;
+
+  for (const el of targets) {
+    el.classList.add("reveal");
+  }
+
+  const observer = new IntersectionObserver(
+    (entries, obs) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        entry.target.classList.add("is-visible");
+        obs.unobserve(entry.target);
+      }
+    },
+    { threshold: 0.15, rootMargin: "0px 0px -10% 0px" }
+  );
+
+  for (const el of targets) {
+    observer.observe(el);
+  }
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
